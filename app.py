@@ -55,17 +55,16 @@ with ui.sidebar(open="open"):
     )
 
 with ui.layout_column_wrap():
-    with ui.card(full_screen=True):
-        ui.h6("Species Count")
-        @render.text
-        def selected_species_count():
-            selected_species_key = input.species_counter()
-            selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
-            if selected_species_name:
-                species_count = len(penguins_df[penguins_df['species'] == selected_species_name])
-                return f"{selected_species_name}: {species_count}"
-            else:
-                return "Please select a species."
+        with ui.value_box(label="Species Count", value = "", theme="bg-gradient-indigo-purple"):
+            @render.text
+            def selected_species_count():
+                selected_species_key = input.species_counter()
+                selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
+                if selected_species_name:
+                    species_count = len(penguins_df[penguins_df['species'] == selected_species_name])
+                    return species_count
+                else:
+                    return "Please select a species."
 
 with ui.layout_column_wrap():
     with ui.card(full_screen=True):
@@ -83,7 +82,7 @@ with ui.layout_column_wrap():
             return px.histogram(filtered_data(), x=input.selected_attribute(), nbins=input.Plotly_bin_count(), color="species")
 
 with ui.layout_column_wrap():
-
+    
     with ui.card(full_screen=True):
         ui.h4("Seaborn Histogram")
         @render.plot(alt="Seaborn Histogram")
