@@ -56,7 +56,7 @@ with ui.sidebar(open="open"):
 
 with ui.layout_column_wrap():
         with ui.value_box(label="Species Count", value = "", theme="bg-gradient-indigo-purple"):
-            @render.text
+            @render.ui
             def selected_species_count():
                 selected_species_key = input.species_counter()
                 selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
