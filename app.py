@@ -5,7 +5,9 @@ from shinywidgets import render_plotly
 import palmerpenguins
 import seaborn as sns
 import pandas as pd
-import shinyswatch
+from shinyswatch import theme
+
+theme.united()
 
 penguins_df = palmerpenguins.load_penguins()
 
@@ -37,13 +39,14 @@ with ui.sidebar(open="open"):
         inline=True,
     )
 
+    
+    ui.input_radio_buttons("dark_mode", "Dark Mode:", ["Yes", "No"], selected="No")
+
     ui.a(
         "Github",
         href="https://github.com/edgarsuarez9/cintel-02-data/tree/main",
         target="_blank",
     )
-
-    ui.input_radio_buttons("dark_mode", "Dark Mode:", ["Yes", "No"], selected="Yes")
 
 with ui.layout_columns():
     with ui.card(full_screen=True):
