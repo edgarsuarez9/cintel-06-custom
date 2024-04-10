@@ -1,3 +1,4 @@
+from shiny import App, ui
 import plotly.express as px
 from shiny.express import input, ui, render
 from shiny import render, reactive
@@ -15,6 +16,7 @@ ui.page_opts(title="Suarez Penguin Data", fillable=True)
 
 with ui.sidebar(open="open"):
     ui.h2("Sidebar")
+    
     ui.input_selectize(
         "selected_attribute",
         "Select Attribute",
@@ -31,6 +33,11 @@ with ui.sidebar(open="open"):
 
     ui.input_slider("seaborn_bin_count", "Seaborn Slider", 0, 100, 50)
 
+    
+    ui.input_select(  
+        "species_counter", "Species Counter:",
+        {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"})
+
     ui.input_checkbox_group(
         "Selected_Species_list",
         "Species Checkbox for All",
@@ -38,7 +45,6 @@ with ui.sidebar(open="open"):
         selected=["Adelie"],
         inline=True,
     )
-
     
     ui.input_radio_buttons("dark_mode", "Dark Mode:", ["Yes", "No"], selected="No")
 
@@ -48,7 +54,20 @@ with ui.sidebar(open="open"):
         target="_blank",
     )
 
-with ui.layout_columns():
+with ui.layout_column_wrap():
+    with ui.card(full_screen=True):
+        ui.h6("Species Count")
+        @render.text
+        def selected_species_count():
+            selected_species_key = input.species_counter()
+            selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
+            if selected_species_name:
+                species_count = len(penguins_df[penguins_df['species'] == selected_species_name])
+                return f"{selected_species_name}: {species_count}"
+            else:
+                return "Please select a species."
+
+with ui.layout_column_wrap():
     with ui.card(full_screen=True):
         ui.h4("Palmer Penguins Data Grid")
 
@@ -63,9 +82,10 @@ with ui.layout_columns():
         def plotly_histogram():
             return px.histogram(filtered_data(), x=input.selected_attribute(), nbins=input.Plotly_bin_count(), color="species")
 
+with ui.layout_column_wrap():
 
-with ui.accordion():
-    with ui.accordion_panel(title="Seaborn Histogram", full_screen=True):
+    with ui.card(full_screen=True):
+        ui.h4("Seaborn Histogram")
         @render.plot(alt="Seaborn Histogram")
         def seaborn_histogram():
             bins = input.seaborn_bin_count()
@@ -74,7 +94,8 @@ with ui.accordion():
             ax.set_ylabel("Count")
             return ax
 
-    with ui.accordion_panel(title="Plotly Scatter Plot", full_screen=True):
+    with ui.card(full_screen=True):
+        ui.h4("Plotly Scatter Plot")
         @render_plotly
         def plotly_scatterplot():
             return px.scatter(
