@@ -9,8 +9,6 @@ import shinyswatch
 
 penguins_df = palmerpenguins.load_penguins()
 
-shinyswatch.theme.lumen()
-
 ui.page_opts(title="Suarez Penguin Data", fillable=True)
 
 with ui.sidebar(open="open"):
@@ -45,20 +43,22 @@ with ui.sidebar(open="open"):
         target="_blank",
     )
 
+    ui.input_radio_buttons("dark_mode", "Dark Mode:", ["Yes", "No"], selected="Yes")
+
 with ui.layout_columns():
-    with ui.card(full_screen=True):
-        ui.h4("Species Histogram")
-
-        @render_plotly
-        def plotly_histogram():
-            return px.histogram(filtered_data(), x=input.selected_attribute(), nbins=input.Plotly_bin_count(), color="species")
-
     with ui.card(full_screen=True):
         ui.h4("Palmer Penguins Data Grid")
 
         @render.data_frame
         def penguins_data():
             return render.DataGrid(filtered_data())
+
+    with ui.card(full_screen=True):
+        ui.h4("Species Histogram")
+
+        @render_plotly
+        def plotly_histogram():
+            return px.histogram(filtered_data(), x=input.selected_attribute(), nbins=input.Plotly_bin_count(), color="species")
 
 
 with ui.accordion():
@@ -89,3 +89,10 @@ with ui.accordion():
 @reactive.calc
 def filtered_data():
     return penguins_df[penguins_df["species"].isin(input.Selected_Species_list())]
+
+@reactive.effect
+def _():
+    if input.dark_mode() == "Yes":
+        ui.update_dark_mode("dark")
+    else:
+        ui.update_dark_mode("light")
