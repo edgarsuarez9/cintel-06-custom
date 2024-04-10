@@ -1,159 +1,91 @@
-# Imports
-from shiny import reactive, render
-from shiny.express import ui
-import random
-from datetime import datetime
-from collections import deque
-import pandas as pd
 import plotly.express as px
-from shinywidgets import render_plotly, render_widget
-from shinyswatch import theme
-from scipy import stats
-from ipyleaflet import Map
-from faicons import icon_svg
+from shiny.express import input, ui, render
+from shiny import render, reactive
+from shinywidgets import render_plotly
+import palmerpenguins
+import seaborn as sns
+import pandas as pd
+import shinyswatch
 
-#Theme
-theme.darkly
+penguins_df = palmerpenguins.load_penguins()
 
-# Reactive Aspects 
+shinyswatch.theme.lumen()
 
-# UI Page Inputs
-
-# UI Sidebar Components
-
-# UI Main Content
-
-
-UPDATE_INTERVAL_SECS: int = 3
-
-DEQUE_SIZE: int = 5
-reactive_value_wrapper = reactive.value(deque(maxlen=DEQUE_SIZE))
-
-@reactive.calc()
-def reactive_calc_combined():
-    reactive.invalidate_later(UPDATE_INTERVAL_SECS)
-    temp = round(random.uniform(35, 65), 1)
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    new_dictionary_entry = {"temp": temp, "timestamp": timestamp}
-    reactive_value_wrapper.get().append(new_dictionary_entry)
-    deque_snapshot = reactive_value_wrapper.get()
-    df = pd.DataFrame(deque_snapshot)
-    latest_dictionary_entry = new_dictionary_entry
-    return deque_snapshot, df, latest_dictionary_entry
-    
-
-ui.page_opts(title="Emporia Kansas: Live Data with Value Card", fillable=True)
+ui.page_opts(title="Suarez Penguin Data", fillable=True)
 
 with ui.sidebar(open="open"):
-
-    ui.h2("Emporia Temperatures", class_="text-center")
-
-    ui.p(
-        "A demonstration of real-time temperature readings in Emporia Kansas.",
-        class_="text-center",
+    ui.h2("Sidebar")
+    ui.input_selectize(
+        "selected_attribute",
+        "Select Attribute",
+        ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
     )
 
-    @render_widget
-    def small_map(width="50%", height="200px"):
-        return Map(center=(38.4039, -96.1817), zoom=10)
+    ui.input_selectize(
+        "second_selected_attribute",
+        "Select Second Attribute",
+        ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
+    )
 
-    ui.hr()
+    ui.input_numeric("Plotly_bin_count", "Bin Count", 40)
 
-    ui.h6("Links:")
+    ui.input_slider("seaborn_bin_count", "Seaborn Slider", 0, 100, 50)
+
+    ui.input_checkbox_group(
+        "Selected_Species_list",
+        "Species Checkbox for All",
+        ["Adelie", "Gentoo", "Chinstrap"],
+        selected=["Adelie"],
+        inline=True,
+    )
 
     ui.a(
-        "GitHub Source",
-        href="https://github.com/edgarsuarez9/cintel-05-cintel",
+        "Github",
+        href="https://github.com/edgarsuarez9/cintel-02-data/tree/main",
         target="_blank",
     )
 
-    ui.a(
-        "GitHub App",
-        href="https://denisecase.github.io/cintel-05-cintel-basic/",
-        target="_blank",
-    )
-    ui.a("PyShiny", href="https://shiny.posit.co/py/", target="_blank")
-    ui.a(
-        "PyShiny Express",
-        href="https://shiny.posit.co/blog/posts/shiny-express/",
-        target="_blank",
-    )
+with ui.layout_columns():
+    with ui.card(full_screen=True):
+        ui.h4("Species Histogram")
 
-    
-with ui.layout_columns():          
-    with ui.value_box(
-      showcase=icon_svg("sun"),
-        theme="bg-gradient-blue-purple",
-    ):
+        @render_plotly
+        def plotly_histogram():
+            return px.histogram(filtered_data(), x=input.selected_attribute(), nbins=input.Plotly_bin_count(), color="species")
 
-        "Current Temperature"
+    with ui.card(full_screen=True):
+        ui.h4("Palmer Penguins Data Grid")
 
-        @render.text
-        def display_temp():
-            """Get the latest reading and return a temperature string"""
-            deque_snapshot, df, latest_dictionary_entry = reactive_calc_combined()
-            return f"{latest_dictionary_entry['temp']} C"
-
-        "warmer than usual"
-        
-
-    with ui.value_box(
-      showcase=icon_svg("calendar"),
-        theme="bg-gradient-blue-purple",
-    ):
-
-        "Current Date and Time"
-           
-        @render.text
-        def display_time():
-            """Get the latest reading and return a timestamp string"""
-            deque_snapshot, df, latest_dictionary_entry = reactive_calc_combined()
-            return f"{latest_dictionary_entry['timestamp']}"
+        @render.data_frame
+        def penguins_data():
+            return render.DataGrid(filtered_data())
 
 
-#with ui.card(full_screen=True, min_height="40%"):
-with ui.card(full_screen=True):
-    ui.card_header("Most Recent Readings")
+with ui.accordion():
+    with ui.accordion_panel(title="Seaborn Histogram", full_screen=True):
+        @render.plot(alt="Seaborn Histogram")
+        def seaborn_histogram():
+            bins = input.seaborn_bin_count()
+            ax = sns.histplot(data=filtered_data(), x=input.selected_attribute(), bins=bins, hue="species")
+            ax.set_title("Palmer Penguins")
+            ax.set_ylabel("Count")
+            return ax
 
-    @render.data_frame
-    def display_df():
-        """Get the latest reading and return a dataframe with current readings"""
-        deque_snapshot, df, latest_dictionary_entry = reactive_calc_combined()
-        pd.set_option('display.width', None)        # Use maximum width
-        return render.DataGrid( df,width="100%")
+    with ui.accordion_panel(title="Plotly Scatter Plot", full_screen=True):
+        @render_plotly
+        def plotly_scatterplot():
+            return px.scatter(
+                filtered_data(),
+                title="Plotly Scatter Plot",
+                x=input.selected_attribute(),
+                y=input.second_selected_attribute(),
+                color="species",
+                labels={
+                    "bill_length_mm": "Bill Length (mm)",
+                    "body_mass_g": "Body Mass (g)",
+                },
+            )
 
-with ui.card():
-    ui.card_header("Chart with Current Trend")
-
-    @render_plotly
-    def display_plot():
-        # Fetch from the reactive calc function
-        deque_snapshot, df, latest_dictionary_entry = reactive_calc_combined()
-
-        # Ensure the DataFrame is not empty before plotting
-        if not df.empty:
-            # Convert the 'timestamp' column to datetime for better plotting
-            df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-                  
-            fig = px.scatter(df,
-            x="timestamp",
-            y="temp",
-            title="Temperature Readings with Regression Line",
-            labels={"temp": "Temperature (°C)", "timestamp": "Time"},
-            color_discrete_sequence=["blue"] )
-            
-
-            sequence = range(len(df))
-            x_vals = list(sequence)
-            y_vals = df["temp"]
-
-            slope, intercept, r_value, p_value, std_err = stats.linregress(x_vals, y_vals)
-            df['best_fit_line'] = [slope * x + intercept for x in x_vals]
-
-        
-            fig.add_scatter(x=df["timestamp"], y=df['best_fit_line'], mode='lines', name='Regression Line')
-
-            fig.update_layout(xaxis_title="Time",yaxis_title="Temperature (°C)")
-
-        return fig
+@reactive.calc
+def filtered_data():
+    return penguins_df[penguins_df["species"].isin(input.Selected_Species_list())]
