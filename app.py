@@ -64,7 +64,9 @@ with ui.layout_column_wrap():
         def small_map(width="50%", height="200px"):
             return Map(center=(64.7743, -64.0538), zoom=10)
     
-    with ui.value_box(showcase=icon_svg("snowflake"), value = "Number of Penguins", theme="bg-gradient-indigo-purple"):
+    with ui.value_box(showcase=icon_svg("snowflake"),width="50px", theme="bg-gradient-indigo-purple"):
+        
+        "Number of  Penguins"
         
         @render.ui
         def selected_species_count():
