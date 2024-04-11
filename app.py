@@ -2,21 +2,23 @@ from shiny import App, ui
 import plotly.express as px
 from shiny.express import input, ui, render
 from shiny import render, reactive
-from shinywidgets import render_plotly
+from shinywidgets import render_plotly, render_widget
 import palmerpenguins
 import seaborn as sns
 import pandas as pd
+from scipy import stats
 from shinyswatch import theme
+from ipyleaflet import Map
+from faicons import icon_svg
 
 theme.united()
 
 penguins_df = palmerpenguins.load_penguins()
 
-ui.page_opts(title="Suarez Penguin Data", fillable=True)
+ui.page_opts(title="Penguin Data 2008", fillable=True)
 
 with ui.sidebar(open="open"):
-    ui.h2("Sidebar")
-    
+       
     ui.input_selectize(
         "selected_attribute",
         "Select Attribute",
@@ -55,16 +57,24 @@ with ui.sidebar(open="open"):
     )
 
 with ui.layout_column_wrap():
-        with ui.value_box(label="Species Count", value = "", theme="bg-gradient-indigo-purple"):
-            @render.ui
-            def selected_species_count():
-                selected_species_key = input.species_counter()
-                selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
-                if selected_species_name:
-                    species_count = len(penguins_df[penguins_df['species'] == selected_species_name])
-                    return species_count
-                else:
-                    return "Please select a species."
+
+    with ui.card(full_screen=True):
+        ui.h2("Penguin Habitat")
+        @render_widget
+        def small_map(width="50%", height="200px"):
+            return Map(center=(64.7743, -64.0538), zoom=10)
+    
+    with ui.value_box(showcase=icon_svg("snowflake"), value = "Number of Penguins", theme="bg-gradient-indigo-purple"):
+        
+        @render.ui
+        def selected_species_count():
+            selected_species_key = input.species_counter()
+            selected_species_name = {"1A": "Adelie", "1B": "Gentoo", "1C": "Chinstrap"}.get(selected_species_key)
+            if selected_species_name:
+                species_count = len(penguins_df[penguins_df['species'] == selected_species_name])
+                return species_count
+            else:
+                return "Please select a species."
 
 with ui.layout_column_wrap():
     with ui.card(full_screen=True):
