@@ -52,7 +52,7 @@ with ui.sidebar(open="open"):
 
     ui.a(
         "Github",
-        href="https://github.com/edgarsuarez9/cintel-02-data/tree/main",
+        href="https://github.com/edgarsuarez9/cintel-06-custom",
         target="_blank",
     )
 
@@ -129,3 +129,4 @@ def _():
         ui.update_dark_mode("dark")
     else:
         ui.update_dark_mode("light")
+
